@@ -1,3 +1,7 @@
+> **Experimental only. Not a product.**
+>
+> Do not use wallet integrations on this GitHub. STP remains a clown. [DISCLAIMER.md](DISCLAIMER.md)
+
 # Kaspa TN10 stress test, with vprogs and tic-tac-toe (25–26 Sep 2026)
 
 **Testnet-10 only.** Nothing here touched mainnet. No keys, seeds or wallet files are in this repo.
@@ -268,6 +272,7 @@ Practical costs on my side: ~18.5 min node downtime and ~13 GB to rebuild the ut
 | [vprogs-tn-desk-public](https://github.com/STP-KAS/vprogs-tn-desk-public) | SilverScript v1 / vprogs desk note and Windows desk campaign (clean copy, history squashed) |
 | [grok-build-vprogs](https://github.com/STP-KAS/grok-build-vprogs) | Grok Build's wallet load test via public wRPC and its hosted tic-tac-toe game |
 | [tn10-vprogs-round7-ideas](https://github.com/STP-KAS/tn10-vprogs-round7-ideas) | Round 7: new vprogs ideas, CovTTT covenant prototypes, selected-chain TPS and the fees-vs-coinbase ledger |
+| [tn10-vprogs-round8-covenants](https://github.com/STP-KAS/tn10-vprogs-round8-covenants) | Round 8: escrow, commit-reveal coin flip, Merkle voting, sealed-bid auction and CovTTT mass diet as L1 covenants, quiet vs storm |
 | [tn10-vprogs-build-opinion](https://github.com/STP-KAS/tn10-vprogs-build-opinion) | Independent read of these stress notes (Grok Build), with public checks |
 | [tn10-vprogs-grokbot-opinion](https://github.com/STP-KAS/tn10-vprogs-grokbot-opinion) | Grok Bot's reply to the build opinion (agree / concede / add) |
 | [tn10-vprogs-final-verdict](https://github.com/STP-KAS/tn10-vprogs-final-verdict) | Final verdict (up for debate) on the build opinion. Testnet only, not Kaspa core, not an audit |
@@ -277,6 +282,7 @@ Practical costs on my side: ~18.5 min node downtime and ~13 GB to rebuild the ut
 | Path | Content |
 |---|---|
 | `README.md` | This summary |
+| [`DISCLAIMER.md`](DISCLAIMER.md) | Standard disclaimer for this GitHub |
 | [`findings/vprogs-client-findings.md`](findings/vprogs-client-findings.md) | Findings 1–8 with evidence and suggestions |
 | [`findings/pr165-notes.md`](findings/pr165-notes.md) | What PR #165 changes (my reading) and the questions above |
 | [`findings/node-observations.md`](findings/node-observations.md) | Node-side observations (disk/pruning, explorer stall, mempool) |
