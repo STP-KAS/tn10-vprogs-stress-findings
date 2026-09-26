@@ -1,0 +1,6 @@
+run,l1_load,fee_policy,feerate_sompi_per_gram,moves_per_s_issued,exec_p50_s,exec_p90_s,exec_p99_s,nofund_failures,notes
+t2,full_10x,normal_buckets[0],573,8,83,101,,4871,debug build; ~5 min; UTXOs stuck in mempool
+r1,1k_bg,priority_bucket,,130-138,3.1,4.1,5.6,0,CPU-bound; 56145 submitted 53271 executed
+r1,full_10x,priority_bucket,~4500,100-130 then 0,,,,3436,~900 TKAS burned in 11.5 min
+r2,full_10x,2x_normal,~1100,22-34,9.5,18.6,23,5953,killed before drain finished
+r4_gd,full_10x,fixed,2000,52.7,8.1,14.4,21.5,,round 4 full gusto 1; 37963 moves all executed

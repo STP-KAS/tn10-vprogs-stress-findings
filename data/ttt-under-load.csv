@@ -1,0 +1,8 @@
+round,window_cest,l1_load,carrier_fee,games_finished,game_fail,game_p50_s,main_failure
+3,26 Sep ~00:45-01:10,1k_bg,relay_floor (carrier min_fee),419,251,14.1,already spent in mempool
+3,26 Sep 00:54-01:07,full_10x,relay_floor (carrier min_fee),5,1322,15.1,already spent in mempool
+3,low load,low,relay_floor,2,12,,step delay 0: already spent in mempool
+4,26 Sep 06:42:40-06:43:44,storm_off,relay_floor,40,0,14.0,
+4,26 Sep 06:43:44-06:55:44,full_10x,relay_floor,8,1223,,stuck below storm fee
+4,26 Sep 06:57:10-07:04:52,storm_off,relay_floor,119,0,15.1,
+4,26 Sep 07:04:52-07:07:36,full_10x,relay_floor,1,104,,stuck below storm fee
