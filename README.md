@@ -242,7 +242,7 @@ Read-only review of commits `36a6d38`..`081af9b` (the PR has since added `bcebf5
 
 ---
 
-## 6. Suggested retest (not run yet)
+## 6. Suggested retest (attempted 26 Sep, not run; see "Retest of #165" below)
 
 A bounded 30–60 min run on the PR branch (now `bcebf59`) + vprog-tictactoe `803a120`, on a node with `--utxoindex`:
 1. Unmodified `ttloop` / `ttflow` games and a vprog runner under a moderate storm at a fixed fee multiple (e.g. 2× and 10× the node minimum).
@@ -255,6 +255,25 @@ A bounded 30–60 min run on the PR branch (now `bcebf59`) + vprog-tictactoe `80
 3. A settler/prover lane with a competing prover, to see the supersede resolution and the served tip advancing.
 
 Practical costs on my side: ~18.5 min node downtime and ~13 GB to rebuild the utxoindex, a release build (5–9 GB), and it has to be timed away from a TN10 pruning move.
+
+### Retest of #165 (26 Sep evening): attempted, not run
+
+**Result: no new-code numbers.** The retest was prepared but did not run, so every finding keeps the status in the table above.
+
+- **Prepared:** vprog-tictactoe `803a120` re-pinned to vprogs `release-candidate` (`bcebf599`) and built in release mode (10 min).
+  A local load harness calls the unmodified upstream carrier/wallet path. Pass/fail criteria were written down before any traffic:
+  #165 carriers under moderate load at 2× the node's normal fee; #103 with a deterministic small-coin probe (the wallet sorts coins
+  largest-first, so a key holding only 0.3 TKAS coins must hit the `amount > extra_value` assert if it still exists); #166 with
+  step delay 0.
+- **Why it didn't run:** a fresh resync of my TN10 node with `--utxoindex` did not fit on disk. The pruning-point UTXO set is ~321M
+  entries, and a TN10 pruning move during the sync forced a second UTXO download plus a second index rebuild (18:38–20:59 CEST).
+  Block bodies from the 25–26 Sep storm hours then grew the database at ~80 KB/block. At 50% of block IBD (consensus 61 GB + utxoindex
+  14 GB, 22 GB free and falling) I dropped the index to keep the node inside my 8 GB disk floor. Without `--utxoindex`, the vprogs
+  wallet can't fetch UTXOs (finding 6).
+- **Scope was cut on purpose:** no 60-minute storm (the storms were done, and they slow TN10 for others). The retest would have been
+  quiet games plus moderate load only.
+- **Not measured:** games finished under load, fee per game/move, degrade-to-cap frequency, #103 panics, #166 reuse, latency,
+  TPS columns, fees vs coinbase. The earlier (old-code) numbers in sections 2 and 4 are unchanged.
 
 ---
 

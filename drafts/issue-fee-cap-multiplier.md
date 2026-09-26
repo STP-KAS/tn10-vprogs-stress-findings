@@ -37,8 +37,10 @@ mechanism, not typical TN10 conditions.
 | E5 | **Carriers under a flood, rounds 3–4** (before #165, relay-floor carriers) | Full storm: 5 games finished / 1,322 failed; 8 / 1,223 in 12 min. Games resumed within ~100 s of the storm stopping. This is the starvation #165 fixes; it is here to show what the other side of the trade (waiting) costs. | [`data/ttt-under-load.csv`](../data/ttt-under-load.csv) |
 | E6 | **Fees vs miner coinbase, round 7** (10 min, 16:03–16:13 CEST, selected-chain blocks only, runners at max(2 × normal, 200) sompi/g) | All TN10 fees 611.1 TKAS; **my runners paid 458.5 TKAS (75 % of all fees)**; 521.5 TKAS of fee value landed with my miners → **net fee cost −63 TKAS** in that window. Fee per finished game ≈ 0.10 TKAS at 200 sompi/g. So on TN10 the flood-setter can also be the fee collector; an issuer that isn't mining has no such offset. One quiet-ish window; not valid for the storm hours. | [round-7 README](https://github.com/STP-KAS/tn10-vprogs-round7-ideas/blob/main/README.md), [round-7 `logs/ledger2.jsonl`](https://github.com/STP-KAS/tn10-vprogs-round7-ideas/blob/main/logs/ledger2.jsonl) |
 | E7 | **Round 8** (running 26 Sep 16:34–18:35 CEST) | **Pending.** No round-8 fee numbers are published yet. | — |
+| E8 | **PR #165 retest (new code, `bcebf59`)** — *added 26 Sep evening* | **Not run.** Build and harness were ready, but a fresh `--utxoindex` resync did not fit on my disk (see the README section "Retest of #165"). **No new-code numbers exist**; E1–E6 are all old-code numbers. | README |
 
-What I have *not* measured: the PR #165 wallet itself under a flood (no retest yet), and how often its degrade-to-cap path fires.
+
+What I have *not* measured: the PR #165 wallet itself under a flood (a retest was attempted 26 Sep but not run, E8), and how often its degrade-to-cap path fires.
 
 ## Proposed options (any subset; maintainers know the trade-offs better)
 
