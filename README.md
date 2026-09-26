@@ -2,8 +2,17 @@
 
 **Testnet-10 only.** Nothing here touched mainnet. No keys, seeds or wallet files are in this repo.
 
+> **One person, one LLM, one desktop.** All of the load this test put on TN10 came from **one individual's setup**:
+> **one LLM (Grok) used in two forms**, plus **one personal desktop**:
+> - **Grok Bot** ran in its own sandbox computer and drove the node, miners, transaction storm and runners. It also operated my PC.
+> - **Grok Build** was run from PowerShell on my PC.
+> - My PC is an ordinary personal desktop.
+>
+> It was not a coordinated group and not dedicated infrastructure. It was one LLM plus one individual's desktop. (TN10 also saw at
+> least one external flood on 26 Sep morning that was not ours. See round 5.)
+
 This is a hobbyist stress test of Kaspa **Testnet-10 (TN10)**. It ran for about **17 hours**, from **25 Sep 20:12 to 26 Sep 13:16 CEST**.
-The goal was simple: test, test, test the network under load. Push TN10 as hard as one home-lab box could, find what breaks first,
+The goal was simple: test, test, test the network under load. Push TN10 as hard as this one-person setup could, find what breaks first,
 and see how real apps behave while blocks are full. At the same time I tried to run
 [vprogs](https://github.com/kaspanet/vprogs) and the [vprog tic-tac-toe](https://github.com/biryukovmaxim/vprog-tictactoe) under that load.
 I'm sharing it because [kaspanet/vprogs PR #165](https://github.com/kaspanet/vprogs/pull/165) touches several of the same areas.
@@ -36,17 +45,17 @@ All times are **CEST (UTC+2)**. Numbers come from my node logs and my private ru
   - senders stopped by exact process id only.
 - **Measurement:** kaspad's own "Processed N blocks … transactions" line every 10 s (network TPS), node mempool/disk samples every 10 s, fee-tier probe transactions, and runner logs with submit → accepted latency.
 
-### Two AI tools
-The test was run with two AI assistants working for me:
-- **Grok Bot** ran the node, miners, storm, runners, monitoring, guards and the reports (rounds 1–6 below).
-- **Grok Build** ran separate wallet load tests from its own wallet. On 25 Sep ~21:20 CEST it tested **through the public TN10 wRPC resolver, not my node**:
+### One LLM in two forms (plus one desktop)
+Everything was done by **one LLM, Grok**, working for me in two forms, plus my own PC. There was no other operator, group or server fleet.
+- **Grok Bot** ran in its own sandbox computer. It ran the node, miners, storm, runners, monitoring, guards and the reports (rounds 1–6 below). It also operated my PC, for example the tic-tac-toe campaign against the hosted demo on 25 Sep evening.
+- **Grok Build** was run from PowerShell on my PC and did separate wallet load tests from its own wallet. On 25 Sep ~21:20 CEST it tested **through the public TN10 wRPC resolver, not my node**:
   - 660 minimum-fee 1-in-1-out sweeps in two waves, 552 and **1,162 tx/s offered** (the second wave lasted 0.29 s), all included;
   - 24 × 0.5 TKAS payments at storage mass 20,000 (KIP-9);
   - it played one tic-tac-toe game on the hosted demo, and all L1 txs were included. But the demo's `/api/state` stayed at `l2_tip` 566,858 and **settled DAA 580,229,488** for the whole session, the same frozen settlement point I saw (finding 8).
 
   Its measured packing ceilings: ~3,079 tx/s for minimum 1-in-1-out txs, ~250 tx/s when every payment makes a 0.5 TKAS output.
   I funded its wallet with ~96.6k TKAS (21:17) and ~300k TKAS (22:47) from my storm pools. What it sent after that is **not in my
-  logs**, so I treat it as an unmeasured extra sender during round 2.
+  logs**, so I treat it as an unmeasured extra sender (still part of the same one-person setup) during round 2.
 
 ### Duration and rounds
 **Total: 25 Sep 20:12 → 26 Sep 13:16 CEST ≈ 17 h.** The storm itself started at 20:54 on 25 Sep. There were short gaps for node
