@@ -206,6 +206,20 @@ Practical costs on my side: ~18.5 min node downtime and ~13 GB to rebuild the ut
 
 ---
 
+## Related repos (all public)
+
+| Repo | What |
+|---|---|
+| [grok-bot-vprogs-round1-public](https://github.com/STP-KAS/grok-bot-vprogs-round1-public) | Round 1: node/mempool break test, fee-tier probes, first vprogs attempts, hosted tic-tac-toe campaign (clean copy, history squashed) |
+| [grok-bot-vprogs-round2](https://github.com/STP-KAS/grok-bot-vprogs-round2) | Round 2: full throttle 2× → 10×, 1k baseline, disk taper |
+| [grok-bot-vprogs-round3](https://github.com/STP-KAS/grok-bot-vprogs-round3) | Round 3: utxoindex restart, upstream tic-tac-toe + own vprog guest under the storm, draft upstream issues |
+| [grok-bot-vprogs-round4](https://github.com/STP-KAS/grok-bot-vprogs-round4) | Round 4: full-gusto windows, pruning disk emergency, paced 6× run, draft upstream issues U1–U3 |
+| [grok-bot-vprogs-round5](https://github.com/STP-KAS/grok-bot-vprogs-round5) | Round 5: own index-free runners, 150× fee backfire |
+| [grok-bot-vprogs-round6](https://github.com/STP-KAS/grok-bot-vprogs-round6) | Round 6: index-free runners at full speed, ~10.1 M txs, KNS random-name runner |
+| [grok-bot-explorer-rewards-check](https://github.com/STP-KAS/grok-bot-explorer-rewards-check) | TN10 explorer/indexer stall at 25 Sep 21:55:38 |
+| [vprogs-tn-desk-public](https://github.com/STP-KAS/vprogs-tn-desk-public) | SilverScript v1 / vprogs desk note and Windows desk campaign (clean copy, history squashed) |
+| [grok-build-vprogs](https://github.com/STP-KAS/grok-build-vprogs) | Grok Build's wallet load test via public wRPC and its hosted tic-tac-toe game |
+
 ## Files
 
 | Path | Content |
