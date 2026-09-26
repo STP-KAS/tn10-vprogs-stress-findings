@@ -16,7 +16,8 @@ Not vprogs bugs, but they matter to anyone running vprogs infrastructure on TN10
 - Still stalled the next morning (06:45).
 
 ## Mempool
-- 25 Sep 21:12:50: kaspad panicked at the mempool cap (`100001 > 100000`, `validate_and_insert_transaction.rs:123`).
+- 25 Sep 21:12:50: kaspad panicked at the mempool cap (`100001 > 100000`, `validate_and_insert_transaction.rs:123`). This was the cap
+  I lowered with `--ram-scale=0.1`; the v2.1.0 default count cap is 1,000,000 (`mining/src/mempool/config.rs`), not tested.
 - The mempool is not persisted: a restart dropped 58,035 txs on my second node (21:11).
 - Later overloads touched ~99.97k repeatedly with 30,298 evictions and no panic. One near-miss on 26 Sep 07:28: 96,546, with 6,223 evictions.
 - Drain after stopping the storm: 54,294 → <1k in 85 s (26 Sep 06:55).

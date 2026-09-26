@@ -6,6 +6,11 @@ Times CEST. "Round N" refers to the table in the [README](../README.md). All run
 Versions: vprogs `release-candidate` `3a61c0b` (= `fix/reorg-boundary-duplicate-bundles`, which vprog-tictactoe pinned at the time),
 vprogs master `f9b84a8` for my own guest, vprog-tictactoe `ba05d92`.
 
+> **Status per the PR #165 author (26 Sep 16:34 CEST):** 1 and 2 fixed in [#165](https://github.com/kaspanet/vprogs/pull/165) (draft);
+> 3 tracked in [#103](https://github.com/kaspanet/vprogs/issues/103); 4 tracked in [#166](https://github.com/kaspanet/vprogs/issues/166);
+> 5 open (draft issue, not filed: [`../drafts/issue-fee-cap-multiplier.md`](../drafts/issue-fee-cap-multiplier.md)); 6 operational constraint;
+> 8 mechanisms targeted by #165. Details: [README, Upstream response](../README.md#upstream-response-26-sep).
+
 ---
 
 ## 1. Activity txs starve at `normal_buckets[0]` under a flood. Addressed by PR #165
@@ -104,10 +109,12 @@ on index size and resync time would also help.
 PR #165's fixpoint prices over the normalized max mass including storage mass, which fits this. The remaining point is cost on small
 coins (finding 5).
 
-## 8. Hosted tic-tac-toe settlement lag (possibly related to PR #165 fixes 2 and 3; unproven)
+## 8. Hosted tic-tac-toe settlement lag (mechanisms targeted by PR #165 per its author; not retested)
 
 - 25 Sep 20:12 CEST probe of the hosted demo: last settlement DAA **580,229,488**, virtual DAA **580,293,545**, a gap of
-  **64,057 DAA ≈ 85.4 min**, `settlementMoved=false`, while the L2 tip moved 57 during the sample.
+  **64,057 DAA** (≈ 85.4 min at 12.5 DAA/s from an 8-second rate sample; ≈ 107 min at the 10 BPS target), `settlementMoved=false`,
+  while the L2 tip moved 57 during the sample. Settlement moved later (settled DAA 580,940,363 at ~15:31 CEST on 26 Sep, per
+  [build-opinion CHECKS](https://github.com/STP-KAS/tn10-vprogs-build-opinion/blob/main/CHECKS.md)).
 - A campaign against the hosted demo that evening (last status 21:45:58): 1,220 sends, 10,349 send failures, **0 finished games,
   1,534 game failures**. I did not isolate the cause (the frozen settlement, the fee floor and coin reuse are all candidates).
 - PR #165 describes a settler loop re-feeding superseded bundles (~3 Hz for hours) and a DA "latest settlement" row frozen on lanes

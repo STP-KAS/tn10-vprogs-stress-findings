@@ -4,6 +4,10 @@ PR: https://github.com/kaspanet/vprogs/pull/165, "l1/wallet, settler, runner: se
 Opened 26 Sep 2026 13:22 CEST as a draft on top of `fix/reorg-boundary-duplicate-bundles`. Commits `36a6d38`, `bf3509c`, `494aacc`, `081af9b`.
 When I read it (26 Sep ~15:00 CEST), `release-candidate` already pointed at `081af9b`, and vprog-tictactoe pinned it in `f128efd`.
 
+> **Update 26 Sep ~16:50 CEST:** the PR now has a 5th commit, `bcebf59` (16:32 CEST, Clippy fix in the fee-policy tests; Clippy and
+> Format pass), and `release-candidate` points at it. The author replied with a mapping of my findings: see the
+> [README, Upstream response](../README.md#upstream-response-26-sep). The notes below are from the `081af9b` read.
+
 This is my reading as an outside tester. I may be wrong about intent. Questions, not demands.
 
 ## What it changes (my reading)
@@ -19,7 +23,7 @@ This is my reading as an outside tester. I may be wrong about intent. Questions,
 
 ## How it maps to what I saw
 - (1) matches my findings 1 and 2 (default fee starves activity; carriers stuck at the floor).
-- (2)/(3) *might* explain the ~85 min hosted settlement lag I saw on 25 Sep 20:12 (finding 8). Unproven.
+- (2)/(3) target the mechanisms behind the 64,057-DAA hosted settlement lag I saw on 25 Sep 20:12 (finding 8), per the PR author's reply. Not retested.
 
 ## Questions / suggestions
 1. **Chain check trusts index absence** (medium confidence). `covenant_liveness` = one `poll_outpoint` with `max_polls = 1`.
@@ -36,6 +40,6 @@ This is my reading as an outside tester. I may be wrong about intent. Questions,
    A cap, or at least a warning log when this path fires, might avoid surprises. There is also no cap or multiplier on the priority rate itself.
 6. **Stale feerate on retries** (small, in vprog-tictactoe rather than the PR). `fee_policy()` is fetched once before `fund_and_submit`,
    so all retry attempts reuse the same rate.
-7. **Not covered by the PR (still open from my runs):** first-UTXO `assert!` panic in the carrier path, in-mempool coin reuse on the
+7. **Not covered by the PR (now tracked: carrier panic in #103, coin reuse in #166; utxoindex is an operational constraint):** first-UTXO `assert!` panic in the carrier path, in-mempool coin reuse on the
    carrier/payout paths, and the `utxoindex` startup requirement. See [vprogs-client-findings.md](vprogs-client-findings.md) 3, 4, 6.
-8. CI: Clippy failed on the PR head (5 × "unnecessary use of `clone` to create a slice from a reference" in new tests in `carrier.rs` / `payout.rs`).
+8. CI: Clippy failed on the PR head (5 × "unnecessary use of `clone` to create a slice from a reference" in new tests in `carrier.rs` / `payout.rs`). Fixed in `bcebf59`.

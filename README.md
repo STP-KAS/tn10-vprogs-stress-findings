@@ -2,6 +2,10 @@
 
 **Testnet-10 only.** Nothing here touched mainnet. No keys, seeds or wallet files are in this repo.
 
+> **Update 26 Sep 16:34 CEST:** the PR #165 author replied and mapped every finding: 1, 2 (and the mechanisms behind 8) are fixed in
+> #165; 3 is tracked in kaspanet/vprogs #103; 4 in #166; 5 (fee cap) is open; 6 (utxoindex) is an operational constraint.
+> See **[Upstream response (26 Sep)](#upstream-response-26-sep)** and the draft (not filed) [fee-cap issue](drafts/issue-fee-cap-multiplier.md).
+
 > **One person, one LLM, one desktop.** All of the load this test put on TN10 came from **one individual's setup**:
 > **one LLM (Grok) used in two forms**, plus **one personal desktop**:
 > - **Grok Bot** ran in its own sandbox computer and drove the node, miners, transaction storm and runners. It also operated my PC.
@@ -23,6 +27,46 @@ All times are **CEST (UTC+2)**. Numbers come from my node logs and my private ru
 > **Big caveat:** my own traffic was a large share of TN10 load on those days (there was also at least one external flood on
 > 26 Sep morning). So "X happened under load" here often means "under load I created". Correlation with anything in PR #165 is
 > **not proof** that my test caused or motivated it.
+
+## Upstream response (26 Sep)
+
+On 26 Sep 16:34 CEST, [Maxim (biryukovmaxim)](https://github.com/biryukovmaxim), author of [kaspanet/vprogs PR #165](https://github.com/kaspanet/vprogs/pull/165),
+[replied to my comment](https://github.com/kaspanet/vprogs/pull/165#issuecomment-5847102090) and mapped each finding. He called the write-up
+"useful". Thank you, Maxim, for taking the time to read a noisy outsider's notes and answer every point. Paraphrased below (short quotes are his words).
+
+| # | Finding (section 4) | Status | Where | Maxim's reply (paraphrase / short quote) |
+|---|---|---|---|---|
+| 1 | vprogs moves starve at the "normal" feerate | **Fixed in #165** (draft, unmerged) | [#165](https://github.com/kaspanet/vprogs/pull/165) commit `36a6d38` | Every funded build now prices at the estimate's priority bucket "over the node's own feerate-ordering mass (compute, transient, and storage mass normalized)". |
+| 2 | Carriers pay only the relay-floor fee | **Fixed in #165** (draft, unmerged) | [#165](https://github.com/kaspanet/vprogs/pull/165) commit `36a6d38` | Same change: carriers and payouts take a `FeePolicy` and pay the priority bucket, not the admission floor. |
+| 8 | Hosted settlement lag on 25 Sep (64,057 DAA) | **Mechanisms targeted by #165** | [#165](https://github.com/kaspanet/vprogs/pull/165) commits `bf3509c`, `494aacc` | A superseded bundle was skipped without being resolved, so the aggregate prover re-fed it at ~Hz and no settlements came until a restart; and the served settled tip only advanced on exit-carrying settlements. Both now "resolve forward" (adopt + chain-gated journal delete; observed-tip serving with rollback restore). Not retested by me. |
+| 3 | Carrier `assert!` panic when the first coin is too small | **Tracked: [#103](https://github.com/kaspanet/vprogs/issues/103)** | open since 15 Jul | "already tracked": funded builders should return errors instead of panicking. |
+| 4 | Coins still pending in the mempool get reused | **Tracked: [#166](https://github.com/kaspanet/vprogs/issues/166)** | filed 26 Sep 16:34 CEST | Single-UTXO builders lack the in-flight threading the activity path has. |
+| 5 | No fee cap / multiplier / bump | **Open — not addressed** | draft: [`drafts/issue-fee-cap-multiplier.md`](drafts/issue-fee-cap-multiplier.md) (**not filed**) | "correct, not addressed here; the priority bucket is paid as-is". The carrier's degrade-to-cap bounds it only when the funding UTXO is small. "Worth a follow-up issue if you want to champion it with your storm numbers attached." |
+| 6 | `utxoindex` required | **Operational constraint** | — | "a real operational constraint; the wallet's UTXO fetch requires `--utxoindex` on the node it talks to." |
+| 7 | Storage mass vs high fees on small coins | Handled in pricing by #165 (full-mass fixpoint); the cost side feeds the fee-cap draft | [#165](https://github.com/kaspanet/vprogs/pull/165) | (covered by the first bullet: storage mass is normalized into the ordering mass) |
+
+**Verified 26 Sep ~16:50 CEST (read-only, nothing posted upstream):**
+- [#103](https://github.com/kaspanet/vprogs/issues/103) "l1/wallet: make funded tx builders fallible instead of panicking on insufficient funding": **open**, by biryukovmaxim, opened 15 Jul 2026 15:12 CEST, last updated 23 Jul 17:44 CEST. It names `build::signed_carrier_transaction`'s `amount > extra_value + fee` assert, the one my workers hit.
+- [#166](https://github.com/kaspanet/vprogs/issues/166) "l1/wallet: single-UTXO builds re-spend outputs their own unconfirmed transactions still hold": **open**, by biryukovmaxim, opened 26 Sep 2026 16:34 CEST. It cites "coin reuse during the 25-26 Sep tn10 stress runs".
+- [#165](https://github.com/kaspanet/vprogs/pull/165): **open, draft, unmerged**, base `fix/reorg-boundary-duplicate-bundles`, now **5 commits**, head `bcebf59` (16:32 CEST, fixes the Clippy lint in the fee-policy tests). Clippy and Format pass on the head; Tests were still running at the time of reading. `release-candidate` points at `bcebf59`.
+
+Anything more on the fee cap stays a draft until I file it myself (or Maxim prefers otherwise). I have not commented, filed or reacted anywhere upstream from this repo.
+
+### Where we differ from the final verdict
+
+[tn10-vprogs-final-verdict](https://github.com/STP-KAS/tn10-vprogs-final-verdict) (26 Sep 15:49 CEST, "up for debate") reads
+[tn10-vprogs-build-opinion](https://github.com/STP-KAS/tn10-vprogs-build-opinion). I checked its claims about these findings against my source data.
+
+**Adopted (it is right, this README is corrected accordingly):**
+- *"Network TPS" is a processed-block-body counter.* The 12,175 peak and 5.7k median count transactions inside every processed block body, so one tx can be counted more than once. Round 7 measured the overstatement at B/A = 1.337 ([round-7 README](https://github.com/STP-KAS/tn10-vprogs-round7-ideas/blob/main/README.md)). The 12,175 peak is not selected-chain throughput.
+- *The mempool panic was at a cap I lowered.* `--ram-scale=0.1` scaled the count cap to 100,000; the default in kaspad v2.1.0 `mining/src/mempool/config.rs` is `1_000_000` (checked). A default-cap run was not done.
+- *The "85 min" settlement lag depends on a rate sample.* The measurement is the **64,057 DAA** gap. My probe converted it with 12.5 DAA/s from an 8-second sample; at the 10 BPS target it is ~107 min. The freeze is historical: at ~15:31 CEST on 26 Sep the demo's settled DAA was 580,940,363, 39,844 DAA behind virtual ([build-opinion CHECKS](https://github.com/STP-KAS/tn10-vprogs-build-opinion/blob/main/CHECKS.md)).
+- *Rounds 5–6 are L1 payload chains, not vprogs*, and #165 is not retested. Agreed (already said in "Setups used").
+- *The vprogs client lost the flood to its fee and its coins; the guest rule held in exec mode.* Agreed, and upstream now maps those three failures to #165 / #166 / #103.
+
+**Where we differ (with evidence):**
+- *"No reconciled net is in the public set."* Since the verdict, round 7 published one: over 10 min (16:03–16:13 CEST, selected-chain blocks only), my runners paid 458.5 TKAS, 521.5 TKAS of fee value landed with my miners, **net −63 TKAS**; my miners had 54.3 % of coinbase value, vs the "~57 %" estimate ([`logs/ledger2.jsonl`](https://github.com/STP-KAS/tn10-vprogs-round7-ideas/blob/main/logs/ledger2.jsonl)). This meets the verdict's own debate condition 5 **for one quiet-ish window only**; the storm-hour fee totals in this README remain gross.
+- *"Pull 165 is identified, not confirmed."* Still true for a retest (none done). But the author has since confirmed the mapping of findings 1, 2 and 8 to #165's mechanisms, and the PR head moved to `bcebf59`.
 
 ---
 
@@ -63,12 +107,14 @@ restarts, the utxoindex rebuild (~19 min) and the 26 Sep 07:10 disk emergency.
 
 | Round | Window (CEST) | Duration | Setup | Fee policy | Key result |
 |---|---|---|---|---|---|
-| 1 | 25 Sep 20:12–22:46 | ~2 h 34 m | Node break test; storm ramp → full throttle, 57.5-min overload (21:48–22:46); fee-tier probes; first vprogs try | storm 1.2× min (120 sompi/g) | Network TPS median ~5.7k at full throttle, 10 s peak 9,274 in the overload; mempool max 99,967, 30,298 evictions; one kaspad mempool-cap panic (21:12); upstream vprogs runtime panicked (no utxoindex) |
-| 2 | 25 Sep 22:47 → 26 Sep 06:31 | ~7 h 44 m | Harder full throttle; utxoindex restart; then ~1k TPS baseline with short full-throttle windows; ended by disk taper | 2× (200) from 22:47, **10× (~1,000)** from 00:15 | 10 s peak **12,175** TPS; mempool max ~88k; storm fees ~197.8k TKAS; disk was the binding limit |
+| 1 | 25 Sep 20:12–22:46 | ~2 h 34 m | Node break test; storm ramp → full throttle, 57.5-min overload (21:48–22:46); fee-tier probes; first vprogs try | storm 1.2× min (120 sompi/g) | "Network TPS"¹ median ~5.7k at full throttle, 10 s peak 9,274 in the overload; mempool max 99,967, 30,298 evictions; one kaspad mempool-cap panic (21:12); upstream vprogs runtime panicked (no utxoindex) |
+| 2 | 25 Sep 22:47 → 26 Sep 06:31 | ~7 h 44 m | Harder full throttle; utxoindex restart; then ~1k TPS baseline with short full-throttle windows; ended by disk taper | 2× (200) from 22:47, **10× (~1,000)** from 00:15 | 10 s peak **12,175** "network TPS"¹; mempool max ~88k; storm fees ~197.8k TKAS; disk was the binding limit |
 | 3 | 25 Sep 23:48 → 26 Sep 01:13 (+ overnight) | ~1 h 25 m + overnight runs | Node with `--utxoindex`; **original** tic-tac-toe (local `ttd`) + my own vprog guest; storm at 1k background vs full; one short burst | storm 10×; vprog runs at normal / priority / 2× normal | Default fee starves moves (p50 83 s); priority works but costly; ttt 5 games vs 1,322 failures under full storm |
 | 4 | 26 Sep 06:38–09:20 | ~2 h 42 m | "Full gusto" windows (storm + own vprog + original ttt), disk emergency, then a paced run | storm 10×, then **6×** from 07:46; own vprog fixed 2,000 sompi/g | Full gusto 1: 3.56k tx/s ours, ~5.0k network; paced 1,219 tx/s for 1 h 32 m (~6.7 M txs); ttt 8 games in 12 min of storm; utxoindex lost at 07:10 |
 | 5 | 26 Sep 09:22–10:35 | ~1 h 13 m | **Own index-free runners** (ttt + small state machines) at high fee, storm alongside; external flood present | storm **150×** (09:22–09:50, backfired), then 10×; runners 20k–60k sompi/g | 1.04 M runner txs, 63,614 games, sub-second p50; mempool max 85,827 |
 | 6 | 26 Sep 10:35–13:16 | ~2 h 41 m | Index-free runners at full speed; storm lowered at 12:21, stopped 12:50; KNS random-name runner from 12:25; miners cut to 2 | runners 5,000 sompi/g, then from **12:22: 2× the node's normal estimate (min 200)** for everything | **~10.1 M runner txs**, ~1,057 tx/s avg (1,191 at full speed), 600,055 games, mempool max 78,319; KNS 1,883 names created |
+
+¹ *"Network TPS" in rounds 1–4 is kaspad's processed-block-body counter ("Processed N blocks … transactions" per 10 s). A tx that sits in more than one parallel block is counted more than once, so it overstates selected-chain throughput (round 7 measured ×1.337). The 12,175 peak is a processing-log peak, not selected-chain TPS. See [Where we differ from the final verdict](#where-we-differ-from-the-final-verdict).*
 
 ### Setups used
 - **Original vprogs / tic-tac-toe runners** (rounds 1, 3, 4): upstream code as published. They **need a node with `--utxoindex`**, which cost an 18.5-min rebuild and 13 GB, and they use the upstream wallet's fee logic (see findings). After the index was deleted in the disk emergency they could not run on my node.
@@ -99,10 +145,12 @@ The node evicted low-feerate txs at the cap (30,298 in one hour), and apps that 
 carriers) stalled until the storm stopped. That was the point of the test, but it means my load visibly affected other TN10
 users during those hours.
 
-**Gross fees** (TKAS; about 57% of coinbase value, fees included, came back to my own miners):
+**Gross fees** (TKAS; my estimate at the time was that about 57% of coinbase value, fees included, came back to my own miners):
 - storm: ~13.6k in the round-1 overload, ~197.8k in round 2, ~26k in the round-4 paced run;
 - index-free runners: ~954k in round 5 and ~685k in round 6;
 - KNS: ~134k in name prices.
+
+These are gross counters, not a net cost. One measured net exists, from round 7 (10 min, 16:03–16:13 CEST 26 Sep, selected-chain blocks): my runners paid 458.5 TKAS (75 % of all TN10 fees), my miners received 521.5 TKAS of fee value, **net −63 TKAS**, and my miners had 54.3 % of coinbase value ([round 7](https://github.com/STP-KAS/tn10-vprogs-round7-ideas/blob/main/README.md)). That window does not carry over to the storm hours.
 
 ---
 
@@ -120,7 +168,7 @@ users during those hours.
 
 Evidence numbers are from my logs. Detail for each: [`findings/vprogs-client-findings.md`](findings/vprogs-client-findings.md).
 
-### Probably addressed by PR #165
+### Addressed by PR #165 (confirmed by the author on 26 Sep; PR still draft, not retested by me)
 
 1. **vprogs moves starve at the wallet's default "normal" fee under a flood.** `Wallet` priced activity at `normal_buckets[0]`. That was 532–573 sompi/g while my storm paid ~1,000 sompi/g (round 3).
    - Normal fee: exec p50 **83 s** / p90 101 s, and **4,871** out-of-funds failures in ~5 min (all issuer UTXOs stuck in the mempool).
@@ -134,26 +182,26 @@ Evidence numbers are from my logs. Detail for each: [`findings/vprogs-client-fin
 
    PR #165 adds `FeePolicy` to carrier and payout builds, and tic-tac-toe now passes it (vprog-tictactoe `f128efd`, `803a120`).
 
-### Still open, as far as I can tell
+### Not addressed by PR #165 (status per the author, 26 Sep)
 
-3. **Carrier funding uses only the first UTXO and `assert!`s (panics) when it is too small.** Tic-tac-toe takes `candidates.into_iter().next()`, and `carrier.rs` asserts `entry.amount > extra_value + fee`.
+3. **[Tracked: kaspanet/vprogs #103]** **Carrier funding uses only the first UTXO and `assert!`s (panics) when it is too small.** Tic-tac-toe takes `candidates.into_iter().next()`, and `carrier.rs` asserts `entry.amount > extra_value + fee`.
    - Round 3: **8 of 8** workers died after ~170 games once coins fragmented (`funding UTXO amount 98955500 too small for extra outputs 100000000`).
    - Round 4: **4 of 4** workers died (`14913800 too small for extra outputs 40000000`).
 
    Higher fees will fragment coins faster. Suggestion: pick the largest coin or combine inputs, and return an error instead of panicking.
-4. **Carrier and payout builds can reuse a coin that is already spent in the mempool.** The `*_excluding` variants exist for activity and settlement, not for carriers or payouts.
+4. **[Tracked: kaspanet/vprogs #166]** **Carrier and payout builds can reuse a coin that is already spent in the mempool.** The `*_excluding` variants exist for activity and settlement, not for carriers or payouts.
    - Step delay 0: 12 of 14 games failed even at low load.
    - At 1k TPS background: 251 of 670 games failed.
    - Under the full storm: **1,322 of 1,327** games failed with `already spent by transaction ... in the mempool`.
 
    Suggestion: track in-flight outpoints, or chain on the unconfirmed change output.
-5. **No fee cap or multiplier, and no bump for stuck txs.**
+5. **[Open — draft issue: [`drafts/issue-fee-cap-multiplier.md`](drafts/issue-fee-cap-multiplier.md), not filed]** **No fee cap or multiplier, and no bump for stuck txs.**
    - At the priority bucket (~4.5× the flood fee), my issuers burned **~900 TKAS in 11.5 min** and went broke (round 3).
    - Pricing at the priority bucket means whoever floods sets the price.
    - In PR #165, a carrier that can't reach the target rate degrades to "pay everything except the minimum viable change" (a unit test checks this). One move during a fee spike could burn most of a game coin.
 
    Suggestion: optional cap (e.g. `min(priority, k × normal)` or an absolute max), plus RBF/bump after N seconds.
-6. **`utxoindex` is required, and the missing-index path panics.**
+6. **[Operational constraint, per the author]** **`utxoindex` is required, and the missing-index path panics.**
    - Without `--utxoindex`, the upstream TN10 runtime panicked at startup: `fetch spendable utxos: RpcSubsystem("Method unavailable. Run the node with the --utxoindex argument.")`.
    - Enabling the index on an existing TN10 datadir took **1,115 s (18.5 min)** with RPC/P2P down and no progress output. It needed **~13 GB**.
    - In the round 4 disk emergency the 13 GB index was the only thing I could delete.
@@ -165,41 +213,41 @@ Evidence numbers are from my logs. Detail for each: [`findings/vprogs-client-fin
    - A 0.5 TKAS 1-in-2-out payment is 20,001 grams, so only ~25 fit per block (round 1).
 
    PR #165's fee solver accounts for storage mass, which is good. The cost of reaching a target rate on a small coin can still be very high (see 5).
-8. **Hosted tic-tac-toe settlement looked frozen.** At 25 Sep 20:12 CEST the demo's last settlement was at DAA 580,229,488 vs virtual DAA 580,293,545, a gap of 64,057 DAA ≈ **85 min**, and it was not moving while the L2 tip advanced.
+8. **[Mechanisms targeted by #165, per the author]** **Hosted tic-tac-toe settlement looked frozen.** At 25 Sep 20:12 CEST the demo's last settlement was at DAA 580,229,488 vs virtual DAA 580,293,545, a gap of **64,057 DAA**, and it was not moving while the L2 tip advanced. (I first wrote "≈ 85 min"; that used 12.5 DAA/s from an 8-second sample. At the 10 BPS target it is ≈ 107 min. The DAA gap is the measurement.) By ~15:31 CEST on 26 Sep settlement had moved on (settled DAA 580,940,363, still 39,844 DAA behind virtual, per [build-opinion CHECKS](https://github.com/STP-KAS/tn10-vprogs-build-opinion/blob/main/CHECKS.md)).
    - A campaign against the hosted demo in the same evening had 0 finished games and 1,534 game failures. I did not isolate the cause.
-   - PR #165 fixes 2 (superseded bundles re-fed forever) and 3 (served settlement tip frozen on lanes without withdrawals) describe symptoms like this. **Unproven** that it's the same thing.
+   - The PR author confirmed on 26 Sep that #165's settler and runner commits target the mechanisms behind this (superseded bundle re-fed at ~Hz with no settlements until restart; served tip advancing only on exit-carrying settlements). Not retested by me.
 
 ### Node-side observations (not vprogs, but they affect anyone running vprogs on TN10)
 
 - **Pruning needs big transient disk.** The TN10 pruning-point move at 07:03 on 26 Sep grew consensus data **75 → 89 GB in ~5 min** with the storm off. Free disk hit 0 and I had to kill the node and delete the utxoindex. Pruning moves were ~12 h apart.
 - **Public explorer/indexer stalled.** The TN10 explorer's transaction database (api-tn10 / kaspa.stream) stopped at **25 Sep 21:55:38**, about 7 minutes into my full-throttle overload. It was still stalled the next morning. My load is a plausible trigger, not a proven one.
-- **kaspad mempool cap panic.** kaspad 2.1.0 panicked once at the mempool cap (`100001 > 100000`) on 25 Sep 21:12. A restart also loses the whole mempool (58k txs lost once).
+- **kaspad mempool cap panic.** kaspad 2.1.0 panicked once at the mempool cap (`100001 > 100000`) on 25 Sep 21:12. That cap was one I lowered with `--ram-scale=0.1`; the default count cap in v2.1.0 is 1,000,000, which I did not test. A restart also loses the whole mempool (58k txs lost once).
 
 ---
 
 ## 5. Notes on the PR #165 diff (questions, lower confidence)
 
-Read-only review of commits `36a6d38`..`081af9b`. Details: [`findings/pr165-notes.md`](findings/pr165-notes.md).
+Read-only review of commits `36a6d38`..`081af9b` (the PR has since added `bcebf59`, a Clippy fix in the tests). Details: [`findings/pr165-notes.md`](findings/pr165-notes.md).
 
 - **Stale feerate across retries (small).** In vprog-tictactoe the fee policy is fetched once before `fund_and_submit`, so retries reuse the same rate. Is that intended?
 - **Chain check trusts index absence (medium confidence).** `covenant_liveness` treats "outpoint not returned by `get_utxos_by_addresses`" after **one** poll as "spent in a chain block", and the journal entry is then deleted. Could a lagging or rebuilding utxoindex, or a reorg that removed the creating settlement, make it delete a bundle that should stay queued?
 - **Thin integration coverage (fairly confident).** `two_provers_contend` runs the settler with `journal: None`, so the new delete path is only covered by unit tests with a stubbed liveness closure.
 - **Unbounded journal (known, low severity).** Every observed settlement now adds an in-memory `Observed` entry to a journal that is never trimmed (the code comment acknowledges this). On a long-running lane it grows with every settlement.
 - **Drain-the-coin on unreachable target (design question).** See finding 5. Maybe log a warning, or add a cap?
-- **CI:** Clippy failed on the PR (5 × `unnecessary use of clone` in the new tests). Cosmetic.
+- **CI:** ~~Clippy failed on the PR~~ Fixed in `bcebf59` (26 Sep 16:32 CEST); Clippy and Format pass on the new head.
 
 ---
 
 ## 6. Suggested retest (not run yet)
 
-A bounded 30–60 min run on the PR branch (`081af9b`) + vprog-tictactoe `803a120`, on a node with `--utxoindex`:
+A bounded 30–60 min run on the PR branch (now `bcebf59`) + vprog-tictactoe `803a120`, on a node with `--utxoindex`:
 1. Unmodified `ttloop` / `ttflow` games and a vprog runner under a moderate storm at a fixed fee multiple (e.g. 2× and 10× the node minimum).
 2. Measure:
    - games finished during the storm (was 0);
    - fee per game and per move;
    - how often the degrade-to-cap path fires;
-   - carrier `assert!` panics (finding 3);
-   - in-mempool reuse failures (finding 4).
+   - carrier `assert!` panics (finding 3, #103);
+   - in-mempool reuse failures (finding 4, #166).
 3. A settler/prover lane with a competing prover, to see the supersede resolution and the served tip advancing.
 
 Practical costs on my side: ~18.5 min node downtime and ~13 GB to rebuild the utxoindex, a release build (5–9 GB), and it has to be timed away from a TN10 pruning move.
@@ -219,6 +267,10 @@ Practical costs on my side: ~18.5 min node downtime and ~13 GB to rebuild the ut
 | [grok-bot-explorer-rewards-check](https://github.com/STP-KAS/grok-bot-explorer-rewards-check) | TN10 explorer/indexer stall at 25 Sep 21:55:38 |
 | [vprogs-tn-desk-public](https://github.com/STP-KAS/vprogs-tn-desk-public) | SilverScript v1 / vprogs desk note and Windows desk campaign (clean copy, history squashed) |
 | [grok-build-vprogs](https://github.com/STP-KAS/grok-build-vprogs) | Grok Build's wallet load test via public wRPC and its hosted tic-tac-toe game |
+| [tn10-vprogs-round7-ideas](https://github.com/STP-KAS/tn10-vprogs-round7-ideas) | Round 7: new vprogs ideas, CovTTT covenant prototypes, selected-chain TPS and the fees-vs-coinbase ledger |
+| [tn10-vprogs-build-opinion](https://github.com/STP-KAS/tn10-vprogs-build-opinion) | Independent read of these stress notes (Grok Build), with public checks |
+| [tn10-vprogs-grokbot-opinion](https://github.com/STP-KAS/tn10-vprogs-grokbot-opinion) | Grok Bot's reply to the build opinion (agree / concede / add) |
+| [tn10-vprogs-final-verdict](https://github.com/STP-KAS/tn10-vprogs-final-verdict) | Final verdict (up for debate) on the build opinion. Testnet only, not Kaspa core, not an audit |
 
 ## Files
 
@@ -228,6 +280,7 @@ Practical costs on my side: ~18.5 min node downtime and ~13 GB to rebuild the ut
 | [`findings/vprogs-client-findings.md`](findings/vprogs-client-findings.md) | Findings 1–8 with evidence and suggestions |
 | [`findings/pr165-notes.md`](findings/pr165-notes.md) | What PR #165 changes (my reading) and the questions above |
 | [`findings/node-observations.md`](findings/node-observations.md) | Node-side observations (disk/pruning, explorer stall, mempool) |
+| [`drafts/issue-fee-cap-multiplier.md`](drafts/issue-fee-cap-multiplier.md) | **DRAFT, not filed:** fee cap / multiplier issue for kaspanet/vprogs, with evidence links |
 | [`data/rounds-summary.json`](data/rounds-summary.json) | Aggregate numbers per round |
 | [`data/round3-fee-policy.csv`](data/round3-fee-policy.csv) | Own-vprog fee-policy runs (round 3) |
 | [`data/ttt-under-load.csv`](data/ttt-under-load.csv) | Tic-tac-toe games vs load (rounds 3–4) |
@@ -237,4 +290,4 @@ Practical costs on my side: ~18.5 min node downtime and ~13 GB to rebuild the ut
 
 The runner scripts are not included (they carry local paths and key-handling code). Happy to describe how they work.
 
-Versions: kaspad 2.1.0 (TN10), vprogs `release-candidate` `3a61c0b` / PR head `081af9b`, vprogs master `f9b84a8`, vprog-tictactoe `ba05d92` → `803a120`.
+Versions: kaspad 2.1.0 (TN10), vprogs `release-candidate` `3a61c0b` (runs) / PR head `081af9b` at review, `bcebf59` on 26 Sep 16:50 CEST, vprogs master `f9b84a8`, vprog-tictactoe `ba05d92` → `803a120`.
